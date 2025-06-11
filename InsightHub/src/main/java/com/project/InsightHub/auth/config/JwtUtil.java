@@ -60,4 +60,28 @@ public class JwtUtil {
             return false;
         }
     }
+
+    /**
+        * This will be used if i send the entire User object in the request
+    */
+
+    // public User extractUserFromToken(String token) {
+    //     try {
+    //         Claims claims = Jwts.parser()
+    //                 .verifyWith(secretKey)
+    //                 .build()
+    //                 .parseSignedClaims(token)
+    //                 .getPayload();
+            
+    //         User user = new User();
+    //         user.setId(claims.get("id", Long.class));
+    //         user.setEmail(claims.get("email", String.class));
+    //         user.setName(claims.get("name", String.class));
+    //         user.setGoogleUser(claims.get("googleUser", Boolean.class));
+            
+    //         return user;
+    //     } catch (JwtException | IllegalArgumentException e) {
+    //         return null;
+    //     }
+    // }
 }
