@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.project.InsightHub.user.entity.User;
 import com.project.InsightHub.workspace.entity.Workspace;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,6 +30,7 @@ public class KnowledgeItem {
     private String fileType;
 
     @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private LocalDateTime uploadedAt = LocalDateTime.now();

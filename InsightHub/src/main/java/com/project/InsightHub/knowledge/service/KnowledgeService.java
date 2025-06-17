@@ -2,6 +2,7 @@ package com.project.InsightHub.knowledge.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.project.InsightHub.knowledge.entity.KnowledgeItem;
@@ -67,5 +69,15 @@ public class KnowledgeService {
                 .map(XWPFParagraph::getText)
                 .collect(Collectors.joining("\n"));
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<KnowledgeItem> getAllForWorkspace(Workspace ws) {
+        return knowledgeRepo.findByWorkspace(ws);
+    }
+
+    @Transactional(readOnly = true)
+    public List<KnowledgeItem> search(String query, Workspace ws) {
+        return knowledgeRepo.searchByKeyword(ws.getId(), "%" + query.toLowerCase() + "%");
     }
 }
