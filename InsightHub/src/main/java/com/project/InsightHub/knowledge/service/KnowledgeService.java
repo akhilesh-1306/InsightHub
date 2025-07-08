@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.project.InsightHub.embedding.service.EmbeddingService;
+import com.project.InsightHub.embedding.service.QdrantService;
 import com.project.InsightHub.knowledge.entity.KnowledgeItem;
 import com.project.InsightHub.knowledge.repository.KnowledgeItemRepository;
 import com.project.InsightHub.user.entity.User;
@@ -23,6 +25,8 @@ import com.project.InsightHub.workspace.entity.Workspace;
 @Service
 public class KnowledgeService {
     @Autowired private KnowledgeItemRepository knowledgeRepo;
+    @Autowired private EmbeddingService embeddingService;
+    @Autowired private QdrantService qdrantService;
 
     public void saveKnowledge(MultipartFile file, User user, Workspace workspace) {
         String content;
@@ -41,6 +45,15 @@ public class KnowledgeService {
         item.setUploadedBy(user);
 
         knowledgeRepo.save(item);
+
+        try{
+            List<String> chunks = embeddingService.splitText(content);
+            List<List<Double>> vectors = embeddingService.embedChunks(chunks);
+            qdrantService.upsertChunks(chunks, vectors, item.getId());
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to extract file content: " + e.getMessage());
+        }
     }
 
     private String extractContent(MultipartFile file) throws Exception {
