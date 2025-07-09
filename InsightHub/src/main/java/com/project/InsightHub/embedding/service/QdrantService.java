@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-// import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -15,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -25,7 +25,7 @@ public class QdrantService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public void upsertChunks(List<String> texts, List<List<Double>> vectors, Long knowledgeId) throws Exception {
+    public void upsertChunks(List<String> texts, List<List<Double>> vectors, Long knowledgeId, Long workspaceId) throws Exception {
         // Validate inputs
         if (texts.size() != vectors.size()) {
             throw new IllegalArgumentException("Texts and vectors must have the same size");
@@ -52,7 +52,8 @@ public class QdrantService {
             
             Map<String, Object> payload = Map.of(
                 "text", texts.get(i),
-                "knowledgeId", knowledgeId
+                "knowledgeId", knowledgeId,
+                "workspaceId", workspaceId
             );
             payloads.add(payload);
         }
@@ -115,4 +116,52 @@ public class QdrantService {
         
         return points;
     }
+
+    public List<String> searchSimilarChunks(List<Double> queryVector, Long workspaceId) throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        Map<String, Object> filter = Map.of(
+            "must", List.of(Map.of(
+                "key", "workspaceId",
+                "match", Map.of("value", workspaceId)
+            ))
+        );
+
+        Map<String, Object> requestBody = Map.of(
+            "vector", queryVector,
+            "limit", 5,
+            "filter", filter,
+            "with_payload", true,
+            "with_vector", false
+        );
+        
+        HttpEntity<String> request = new HttpEntity<>(
+            new ObjectMapper().writeValueAsString(requestBody), headers
+        );
+        
+        ResponseEntity<String> response = restTemplate.postForEntity(
+            qdrantHost + "/collections/knowledge_chunks/points/search", 
+            request, 
+            String.class
+        );
+        
+        JsonNode results = new ObjectMapper().readTree(response.getBody()).get("result");
+        List<String> texts = new ArrayList<>();
+        
+        if (results != null) {
+            for (JsonNode point : results) {
+                JsonNode payload = point.get("payload");
+                if (payload != null) {
+                    JsonNode textNode = payload.get("text");
+                    if (textNode != null) {
+                        texts.add(textNode.asText());
+                    }
+                }
+            }
+        }
+        
+        return texts;
+    }
+
 }

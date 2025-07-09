@@ -49,7 +49,7 @@ public class KnowledgeService {
         try{
             List<String> chunks = embeddingService.splitText(content);
             List<List<Double>> vectors = embeddingService.embedChunks(chunks);
-            qdrantService.upsertChunks(chunks, vectors, item.getId());
+            qdrantService.upsertChunks(chunks, vectors, item.getId(), workspace.getId()) ;
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to extract file content: " + e.getMessage());
